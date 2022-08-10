@@ -6,6 +6,7 @@ const path = require('path')
 const devEnv = require('./dev.env')
 
 module.exports = {
+  lintOnSave: false,
   dev: {
 
     // Paths
