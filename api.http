@@ -3,3 +3,13 @@ POST http://localhost/api/product/category/delete HTTP/1.1
 Content-Type: application/json
 
 [1000]
+
+###
+POST http://localhost/api/product/category/update/sort HTTP/1.1
+Content-Type: application/json
+
+[{"catId":166,"sort":0},{"catId":165,"sort":1,"parentCid":22,"catLevel":3},[],{"catId":167,"sort":2},{"catId":168,"sort":3}]
+
+###
+GET http://localhost/api/product/attrgroup/list/0?page=1&limit=3&key=小 HTTP/1.1 
+Content-Type: application/json

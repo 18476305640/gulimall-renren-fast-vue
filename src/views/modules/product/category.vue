@@ -14,6 +14,13 @@
       @click="saveCategorys"
         >点击保存</el-button
       >
+      <span style="color:#c0c4cc">&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+      <el-button type="danger" round  size="mini" 
+      @click="deleteCategorys"
+      :disabled="isChecked"
+        >批量删除</el-button
+      >
+      
     </div>
     <el-tree
       :data="data"
@@ -26,6 +33,7 @@
       :draggable="dropData.isDrop"
       :allow-drop="isDrag"
       @node-drop="droped"
+      ref="categoryTree"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -99,7 +107,8 @@ export default {
       dropData: {
         action: [],   // 保存拖拽的数据
         isDrop: false // 是否可拖拽
-      }
+      },
+      isChecked: true
 
     }
   },
@@ -107,6 +116,36 @@ export default {
     this.getMenus()
   },
   methods: {
+    deleteCategorys () {
+      let checkedData = this.$refs.categoryTree.getCheckedNodes()
+      let catIds = Array.from(checkedData, data => data.catId)
+      let catNames = Array.from(checkedData, data => data.name)
+      console.log(catIds, catNames)
+      this.$confirm(`是否删除【${catNames}】这些分类?`, '批量删除', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$http({
+          url: this.$http.adornUrl('/product/category/delete'),
+          method: 'post',
+          data: this.$http.adornData(catIds, false)
+        }).then(({ data }) => {
+          if (data && data.code === 0) {
+            this.$message({
+              message: '操作成功',
+              type: 'success',
+              duration: 1000,
+              onClose: () => {
+                this.getMenus()
+              }
+            })
+          } else {
+            this.$message.error(data.msg)
+          }
+        })
+      }).catch(() => { })
+    },
     // 确保拖拽后的树深度 <=3
     isDrag (draggingNode, dropNode, type) {
       // 默认展开,第一个值
@@ -144,12 +183,14 @@ export default {
       this.expandedKey.push(parent.data.catId)
       // 获取所有子孙节点要修改的category数据
       for (let i = 0; i < parent.childNodes.length; i++) {
-        // 【1】如果是拖拽的节点，它的sort,parentCid,level都将改变，收集成一个category子集对象
+        // 【1】如果是拖拽的节点，它的sort,parentCid,level都将改变，收集成一个一个category子集对象
         if (parent.childNodes[i].data.catId === draggingNode.data.catId) {
           updateCategorys.push({ catId: parent.childNodes[i].data.catId, sort: i, parentCid: (parent.data.catId === undefined ? 0 : parent.data.catId), catLevel: parent.level + 1 })
+          // 【2】 拖拽节点的子孙节点的level将改变，收集成一个一个category子集对象
           updateCategorys.push(...this.collectChildrenUpdateData(parent.childNodes[i]))
           continue
         }
+        // 【3】如果是拖拽节点的上下节点，sort会改变，收集成一个一个category子集对象
         updateCategorys.push({catId: parent.childNodes[i].data.catId, sort: i})
       }
       // 将本次收集要修改的category数据push到全局容器中
@@ -157,8 +198,9 @@ export default {
     },
     // droped函数使用，用于收集子节点的数据
     collectChildrenUpdateData (rootNode) {
-      console.log('rootNode', rootNode)
+      // 收集拖拽节点的子孙节点category子集对象-容器
       let collectNode = []
+      // 递归获取
       for (let i = 0; i < rootNode.childNodes.length; i++) {
         collectNode.push({ catId: rootNode.childNodes[i].data.catId, catLevel: rootNode.level + 1 })
         collectNode.push(...this.collectChildrenUpdateData(rootNode.childNodes[i]))
@@ -335,7 +377,15 @@ export default {
         })
       }).catch(() => { })
     }
+
+  },
+  mounted () {
+    // 维护一个变量，让批量删除按键是否可用
+    setInterval(() => {
+      this.isChecked = this.$refs.categoryTree.getCheckedNodes().length === 0
+    }, 300)
   }
+
 }
 </script>
 
