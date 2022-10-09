@@ -27,6 +27,8 @@
     "node-sass": "^6.0.1",
     "npm": "^6.9.0",
     "publish": "^0.6.0",
+    "pubsub": "^3.2.1",
+    "pubsub-js": "^1.9.4",
     "sass-loader": "6.0.6",
     "svg-sprite-loader": "3.7.3",
     "vue": "2.5.16",
